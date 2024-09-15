@@ -3,28 +3,28 @@ import Gallery from "../gallery/Gallery";
 import shareLogo from '../assets/share-logo.png';
 import instaSvg from '../assets/instagram.svg';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import { Fade } from "@mui/material";
+import { Fade, Grow, useMediaQuery, useTheme } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion"
 
 
 const list = {
-  visible: { opacity: 1, transitionDelay: '4s', timeout: 8000 },
+  visible: { opacity: 1, transitionDelay: '4s', },
   hidden: { opacity: 0, transitionDuration: '1s', transition: {
     delay: 1,
     type: "spring",
-    stiffness: 100,
-    damping: 10
+    stiffness: 400,
+    damping: 400
   }},
 }
 
 const item = {
-  visible: { opacity: 1, scale: 1, transition: { delay: 0.4,  } },
-  hidden: { opacity: 0, scale: 0, transitionDuration: '0.4s', transition: {
-    delay: 3,
+  visible: { opacity: 1, scale: 1, },
+  hidden: { opacity: 0, scale: 0, transitionDuration: 0.8, transition: {
+    delay: 1,
     type: "spring",
     stiffness: 400,
-    damping: 10
+    damping: 400
   }},
 }
 
@@ -73,44 +73,48 @@ const images = [
 
 export default () => {
   const location = useLocation();
-
+  const theme = useTheme();
+const mobile = useMediaQuery(theme.breakpoints.down('sm'));
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', width: '100%', height: '100vh' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', width: '100%', height: '100vh', overflow: 'hidden' }}>
       <Fade in style={{ transitionDuration: '3s'}}>
-        <AspectRatio ratio="12/3" sx={{ width: '100%', zIndex: 4, backgroundColor: 'transparent', minWidth: 320, maxWidth: 500, height: 200, mt: 4 }} variant="plain">
+        <AspectRatio ratio="12/4" sx={{ width: '100%', zIndex: 4, backgroundColor: 'transparent', minWidth: mobile ? 300 : 420, maxWidth: 600, height: 300, mt: 4 }} variant="plain">
           <img src={shareLogo} />
         </AspectRatio>
       </Fade>
-      <Box sx={{ position: 'absolute', top: 120 }}>
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={list}
-          style={{
-            display: 'flex'
-          }}
-        >
-          <motion.div style={{ marginRight: 8, marginTop: 4 }} variants={item}>
-            <Button
-              onClick={function(){}}
-              size="small"
-              variant="soft"
-              sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'},  }}
+      <Box sx={{ position: 'absolute', bottom: 80 }}>
+        <AnimatePresence>
+          {location.pathname === '/' && (
+            <motion.div
+              initial={{ opacity: 0}}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              style={{
+                display: 'flex'
+              }}
             >
-              <EmailOutlinedIcon style={{ width: 30, height: 20 }} />
-            </Button>
-          </motion.div>
-          <motion.div style={{ marginLeft: 8, marginTop: 4 }} variants={item}>
-            <Button
-              onClick={function(){}}
-              size="small"
-              variant="soft"
-              sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'}, }}
-            >
-              <img src={instaSvg} style={{ width: 20, height: 20  }} />
-            </Button>
-          </motion.div>
-        </motion.div>
+              <Grow in={location.pathname === '/'} timeout={1000}>
+                <Button
+                  onClick={function(){}}
+                  size="large"
+                  variant="soft"
+                  sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'}, mx: 1, mt: 1 }}
+                >
+                  <EmailOutlinedIcon style={{ width: 40, height: 30 }} />
+                </Button>
+              </Grow>
+              <Grow in={location.pathname === '/'} timeout={1000}>
+                <Button
+                  onClick={function(){}}
+                  size="large"
+                  variant="soft"
+                  sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'}, mx: 1, mt: 1 }}
+                >
+                  <img src={instaSvg} style={{ width: 30, height: 30  }} />
+                </Button>
+              </Grow>
+            </motion.div>)}
+          </AnimatePresence>
       </Box>
       <Gallery images={images}/>
       <AnimatePresence>
