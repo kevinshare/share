@@ -3,30 +3,30 @@ import Gallery from "../gallery/Gallery";
 import shareLogo from '../assets/share-logo.png';
 import instaSvg from '../assets/instagram.svg';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import { Fade, Grow, useMediaQuery, useTheme } from "@mui/material";
+import { Fade, Grow } from "@mui/material";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion"
 
 
-const list = {
-  visible: { opacity: 1, transitionDelay: '4s', },
-  hidden: { opacity: 0, transitionDuration: '1s', transition: {
-    delay: 1,
-    type: "spring",
-    stiffness: 400,
-    damping: 400
-  }},
-}
+// const list = {
+//   visible: { opacity: 1, transitionDelay: '4s', },
+//   hidden: { opacity: 0, transitionDuration: '1s', transition: {
+//     delay: 1,
+//     type: "spring",
+//     stiffness: 400,
+//     damping: 400
+//   }},
+// }
 
-const item = {
-  visible: { opacity: 1, scale: 1, },
-  hidden: { opacity: 0, scale: 0, transitionDuration: 0.8, transition: {
-    delay: 1,
-    type: "spring",
-    stiffness: 400,
-    damping: 400
-  }},
-}
+// const item = {
+//   visible: { opacity: 1, scale: 1, },
+//   hidden: { opacity: 0, scale: 0, transitionDuration: 0.8, transition: {
+//     delay: 1,
+//     type: "spring",
+//     stiffness: 400,
+//     damping: 400
+//   }},
+// }
 
 
 const images = [
@@ -52,11 +52,11 @@ const images = [
     url: 'https://soundcloud.com/kevinshare/thousand-miles-share-remix-2?si=d1c49080a79a4c928b7c297464192041&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
   },
   {
-    image: '/young-blood-cover.jpg',
-    title: 'Young Blood (Share Remix)',
-    artist: 'The Naked and Famous',
-    type: 'soundcloud',
-    url: 'https://soundcloud.com/kevinshare/young-blood-remix?si=26eba52770d049e4a3ed08a2b65b58fb&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
+    image: '/lonely-cover.png',
+    title: 'Lonely (Share Remix)',
+    artist: 'Justin Bieber',
+    type: 'youtube',
+    url: 'https://www.youtube.com/watch?v=6uDHEs2jUAU'
   },
   {
     image: '/freaky-cover.png',
@@ -73,13 +73,13 @@ const images = [
 
 export default () => {
   const location = useLocation();
-  const theme = useTheme();
-const mobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const theme = useTheme();
+  // const mobile = useMediaQuery(theme.breakpoints.down('sm'));
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', width: '100%', height: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden' }}>
       <Fade in style={{ transitionDuration: '3s'}}>
-        <AspectRatio ratio="12/4" sx={{ width: '100%', zIndex: 4, backgroundColor: 'transparent', minWidth: mobile ? 300 : 420, maxWidth: 600, height: 300, mt: 4 }} variant="plain">
-          <img src={shareLogo} />
+        <AspectRatio ratio="12/3" sx={{ zIndex: 4, backgroundColor: 'transparent', minWidth: 300, maxWidth:  300, height: 200, mt: 4, transition: 'all smooth 2s' }} variant="plain">
+          <img src={shareLogo} style={{ transition: 'all smooth 2.0s' }}/>
         </AspectRatio>
       </Fade>
       <Box sx={{ position: 'absolute', bottom: 80 }}>
@@ -95,7 +95,7 @@ const mobile = useMediaQuery(theme.breakpoints.down('sm'));
             >
               <Grow in={location.pathname === '/'} timeout={1000}>
                 <Button
-                  onClick={function(){}}
+                  onClick={() => window.location.href = 'mailto:contactsharemusic@gmail.com'}
                   size="large"
                   variant="soft"
                   sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'}, mx: 1, mt: 1 }}
@@ -105,12 +105,12 @@ const mobile = useMediaQuery(theme.breakpoints.down('sm'));
               </Grow>
               <Grow in={location.pathname === '/'} timeout={1000}>
                 <Button
-                  onClick={function(){}}
+                  onClick={() => window.open('https://www.instagram.com/kevin_share/', '_blank')}
                   size="large"
                   variant="soft"
                   sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'}, mx: 1, mt: 1 }}
                 >
-                  <img src={instaSvg} style={{ width: 30, height: 30  }} />
+                  <img src={instaSvg} style={{ width: 26, height: 26  }} />
                 </Button>
               </Grow>
             </motion.div>)}
