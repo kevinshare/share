@@ -6,9 +6,8 @@ import { Canvas, useFrame } from '@react-three/fiber'
 import { useCursor, MeshReflectorMaterial, Image, RoundedBox, Environment, Html } from '@react-three/drei'
 import getUuid from 'uuid-by-string'
 import { Location, NavigateFunction, useLocation, useNavigate } from 'react-router-dom'
-import { AspectRatio, Box, Button, Card, CardContent, IconButton, Typography, useTheme } from '@mui/joy'
+import { AspectRatio, Box, Button, Card, CardContent, Typography, useTheme } from '@mui/joy'
 import { Fade, useMediaQuery } from '@mui/material';
-import { BookmarkAdd } from '@mui/icons-material'
 
 const GOLDENRATIO = 1.61803398875
 
@@ -118,7 +117,7 @@ function Frames({ images, location, tablet, mobile, navigate, q = new THREE.Quat
         }
         navigate(clicked.current === e.object ? '/' : '/song/' + e.object.name)
       }}
-      onPointerMissed={(e) => {}}>
+      onPointerMissed={() => {}}>
       {/* @ts-ignore */}
       <Frame mobile={mobile} url={images[0].image} imageProps={images[0]} position={[0, 0, 1.25]} name={name} />
       {/* <Frame position={[-0.8, 0, -0.5]} url={images[1]} />
