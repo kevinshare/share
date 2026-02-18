@@ -1,12 +1,9 @@
 import { FC, useEffect } from "react";
 import { snackError } from "./snackbar.ts";
 import WarningOutlinedIcon from "@mui/icons-material/WarningOutlined";
-// import { useRouteError } from "react-router-dom";
-import { Typography } from "@mui/joy";
+import { Typography } from "@mui/material";
 
 export const ErrorBoundary: FC = () => {
-
-    // const error = useRouteError();
 
     useEffect(() => {
         snackError('An error occurred.');

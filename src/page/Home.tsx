@@ -1,140 +1,264 @@
-import { AspectRatio, Box, Button, Typography } from "@mui/joy";
+import { useCallback, useEffect, useState } from "react";
+import { Box, Button, Fade, Grow, Typography, useMediaQuery, useTheme } from "@mui/material";
 import Gallery from "../gallery/Gallery";
 import shareLogo from '../assets/share-logo.png';
-import instaSvg from '../assets/instagram.svg';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
-import { Fade, Grow } from "@mui/material";
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion"
+import { motion, AnimatePresence } from "motion/react";
+import { snackSuccess } from "../snackbar";
+import { SnackbarProvider } from "notistack";
+import { PropImage } from "../gallery/Gallery";
+import StarBackground from "../components/StarBackground";
 
-
-// const list = {
-//   visible: { opacity: 1, transitionDelay: '4s', },
-//   hidden: { opacity: 0, transitionDuration: '1s', transition: {
-//     delay: 1,
-//     type: "spring",
-//     stiffness: 400,
-//     damping: 400
-//   }},
-// }
-
-// const item = {
-//   visible: { opacity: 1, scale: 1, },
-//   hidden: { opacity: 0, scale: 0, transitionDuration: 0.8, transition: {
-//     delay: 1,
-//     type: "spring",
-//     stiffness: 400,
-//     damping: 400
-//   }},
-// }
-
-
-const images = [
+const images: PropImage[] = [
   {
-    image: '/never-lose-cover.png',
-    title: 'Never Lose Me (Share Remix)',
+    image: '/BetterHereIconCover.png',
+    title: 'Better Here',
+    artist: 'Share, Electricole',
+    type: 'Pre-save',
+    url: 'https://ffm.to/betterhere'
+  },
+  {
+    image: '/FloMilliIconCover.png',
+    title: 'Never Lose Me \n (Share Remix)',
     artist: 'Flo Milli',
-    type: 'soundcloud',
+    type: 'Soundcloud',
     url: 'https://soundcloud.com/kevinshare/flo-milli-never-lose-me-share-remix?si=ceffc9c05bd44e6f8532ac00f0b3b88f&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
   },
   {
-    image: '/fashion-killa-cover.jpg',
-    title: 'Fashion Killa (Share Remix)',
-    artist: 'A$AP Rocky',
-    type: 'soundcloud',
-    url: 'https://soundcloud.com/kevinshare/aap-rocky-fashion-killa-share-remix?si=a99963ffd7954150acb82f3b25c731b9&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
-  },
-  {
-    image: '/thousand-miles-cover.jpg',
-    title: 'A Thousand Miles (Share Remix)',
+    image: '/ThousanMilesIconCover.png',
+    title: 'A Thousand Miles \n (Share Remix)',
     artist: 'Vanessa Carlton',
-    type: 'soundcloud',
+    type: 'Soundcloud',
     url: 'https://soundcloud.com/kevinshare/thousand-miles-share-remix-2?si=d1c49080a79a4c928b7c297464192041&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
   },
   {
-    image: '/lonely-cover.png',
-    title: 'Lonely (Share Remix)',
-    artist: 'Justin Bieber',
-    type: 'youtube',
-    url: 'https://www.youtube.com/watch?v=6uDHEs2jUAU'
+    image: '/FashionKillaIconCover.png',
+    title: "Fashion Killa \n (Share Remix)",
+    artist: 'A$AP Rocky',
+    type: 'Soundcloud',
+    url: 'https://soundcloud.com/kevinshare/aap-rocky-fashion-killa-share-remix?si=a99963ffd7954150acb82f3b25c731b9&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
   },
   {
-    image: '/freaky-cover.png',
-    title: 'Freaky',
-    artist: 'Share, AK Renny, Devowr.',
-    type: 'spotify',
-    url: 'https://open.spotify.com/track/4tAJxr3zZNk0FScBlFJGFU?si=eecc69362d804288'
-  }
-  
-  
-  // 'https://images.pexels.com/photos/327482/pexels-photo-327482.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-  // 'https://images.pexels.com/photos/358574/pexels-photo-358574.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260'
+    image: '/LonelyIconCover.png',
+    title: 'Lonely (Share Remix)',
+    artist: 'Justin Bieber',
+    type: 'Youtube',
+    url: 'https://www.youtube.com/watch?v=6uDHEs2jUAU'
+  },
 ];
 
-export default () => {
+export default function Home() {
   const location = useLocation();
-  // const theme = useTheme();
-  // const mobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const theme = useTheme();
+  const mobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [loadPage, setLoadPage] = useState(sessionStorage.getItem('share:visitor') === 'true');
+  const [hideTheMessage, setHideTheMessage] = useState(false);
+  const [hidePointer, setHidePointer] = useState(false);
+
+  const handleClick = useCallback(() => {
+    setHideTheMessage(true);
+  }, []);
+
+  // Hide pointer when navigating away from home (i.e., when a gallery item is clicked)
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      setHidePointer(true);
+    }
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadPage(true);
+      sessionStorage.setItem('share:visitor', 'true');
+      window.addEventListener("click", handleClick);
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("click", handleClick);
+    };
+  }, [handleClick]);
+
   return (
-    <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <Fade in style={{ transitionDuration: '3s'}}>
-        <AspectRatio ratio="12/3" sx={{ zIndex: 4, backgroundColor: 'transparent', minWidth: 300, maxWidth:  300, height: 200, mt: 4, transition: 'all smooth 2s' }} variant="plain">
-          <img src={shareLogo} style={{ transition: 'all smooth 2.0s' }}/>
-        </AspectRatio>
-      </Fade>
-      <Box sx={{ position: 'absolute', bottom: 80 }}>
+    <SnackbarProvider
+      anchorOrigin={{
+        vertical: 'top',
+        horizontal: 'right',
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
+        <StarBackground />
+        <Fade in={loadPage} style={{ transitionDuration: '3s', zIndex: 10, position: 'relative' }}>
+          <Box sx={{ backgroundColor: 'transparent', minWidth: { xs: 240, sm: 350 }, maxWidth: { xs: 240, sm: 350 }, height: { xs: 150, sm: 220 }, mt: 2, transition: 'all smooth 2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <img src={shareLogo} style={{ transition: 'all smooth 2.0s', width: '100%', height: '100%', objectFit: 'cover' }}/>
+          </Box>
+        </Fade>
+        {!loadPage && (
+          mobile ? (
+            <Typography
+              className="anim-typewriter-mobile"
+              sx={{
+                width: '100%',
+                zIndex: 8,
+                color: 'white',
+                fontFamily: 'Tiny5, sans-serif',
+                margin: '0 auto',
+                borderRight: '2px solid rgba(255,255,255,.75)',
+                fontSize: '1.2em',
+                textAlign: 'center',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                transform: 'translateY(-50%)',
+                maxWidth: '280px',
+              }}
+            >
+              {'Hi thank you for stopping by ily :)'}
+            </Typography>
+          ) : (
+            <AnimatePresence>
+              <motion.div
+                initial={{ opacity: 1 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 1.3 } }}
+                style={{
+                  position: 'relative',
+                  top: '30%',
+                }}
+              >
+                <Typography
+                  className="anim-typewriter-desktop"
+                  sx={{
+                    width: '100%',
+                    zIndex: 8,
+                    color: 'white',
+                    fontFamily: 'Tiny5, sans-serif',
+                    margin: '0 auto',
+                    borderRight: '2px solid rgba(255,255,255,.75)',
+                    fontSize: '1.6em',
+                    textAlign: 'center',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    transform: 'translateY(-50%)',
+                    maxWidth: '380px',
+                  }}
+                >
+                  {'Hi thank you for stopping by ily :)'}
+                </Typography>
+              </motion.div>
+            </AnimatePresence>
+          )
+        )}
+        {loadPage && (
+          <Box sx={{ position: 'absolute', bottom: 80 }}>
+            <AnimatePresence>
+              {location.pathname === '/' && (
+                <motion.div
+                  initial={{ opacity: 0}}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  style={{
+                    display: 'flex'
+                  }}
+                >
+                  <Grow in={location.pathname === '/'} timeout={1000}>
+                    <Button
+                      onClick={async () => {
+                        await navigator.clipboard.writeText('contactsharemusic@gmail.com');
+                        window.location.href = 'mailto:contactsharemusic@gmail.com';
+                        snackSuccess('Email copied :)')
+                      }}
+                      size="large"
+                      variant="contained"
+                      sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'}, mx: 1, mt: 1, boxShadow: 'none' }}
+                    >
+                      <EmailOutlinedIcon style={{ width: 40, height: 30 }} />
+                    </Button>
+                  </Grow>
+                </motion.div>)}
+              </AnimatePresence>
+          </Box>
+        )}
+
+          <Fade in={loadPage} timeout={5000}>
+            <div onClick={() => setHidePointer(true)}>
+              <Gallery images={images}/>
+            </div>
+          </Fade>
+
+        {loadPage && (
         <AnimatePresence>
           {location.pathname === '/' && (
             <motion.div
-              initial={{ opacity: 0}}
+              initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               style={{
-                display: 'flex'
+                position: 'absolute', bottom: 140, zIndex: 1
               }}
             >
-              <Grow in={location.pathname === '/'} timeout={1000}>
-                <Button
-                  onClick={() => window.location.href = 'mailto:contactsharemusic@gmail.com'}
-                  size="large"
-                  variant="soft"
-                  sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'}, mx: 1, mt: 1 }}
-                >
-                  <EmailOutlinedIcon style={{ width: 40, height: 30 }} />
-                </Button>
-              </Grow>
-              <Grow in={location.pathname === '/'} timeout={1000}>
-                <Button
-                  onClick={() => window.open('https://www.instagram.com/kevin_share/', '_blank')}
-                  size="large"
-                  variant="soft"
-                  sx={{ zIndex: 5, bgcolor: 'rgba(255,255,255,0.07)', color: '#ffffff', '&:hover': { backgroundColor: 'rgba(255,255,255,0.1)'}, mx: 1, mt: 1 }}
-                >
-                  <img src={instaSvg} style={{ width: 26, height: 26  }} />
-                </Button>
-              </Grow>
-            </motion.div>)}
-          </AnimatePresence>
-      </Box>
-      <Gallery images={images}/>
-      <AnimatePresence>
-        {location.pathname === '/' && (
+              <Typography sx={{ color: '#EDE7F6', fontFamily: 'Tiny5, sans-serif', fontSize: 24 }}>
+                Its cool to be weird
+              </Typography>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        )}
+        {/* <Fade in={loadPage && !hideTheMessage && location.pathname === '/'} timeout={{ enter: theme.transitions.duration.enteringScreen + 1200, exit: theme.transitions.duration.leavingScreen + 800 }} style={{ zIndex: 10, position: 'absolute', top: 180 }}>
+          <Box sx={{ p: 1, px: 2, borderRadius: 6 }}>
+            <Typography variant="caption" sx={{ fontFamily: 'Tiny5', }}>
+              Click the gallery to explore 👀
+            </Typography>
+          </Box>
+        </Fade> */}
+
+        {/* Animated pointer for presave */}
+        {loadPage && !hidePointer && location.pathname === '/' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            transition={{ delay: 1.5 }}
             style={{
-              position: 'absolute', bottom: 140, zIndex: 1
+              position: 'absolute',
+              top: mobile ? '42%' : '32%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 6,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
             }}
           >
-            <Typography sx={{ color: '#EDE7F6', fontFamily: 'Tiny5, sans-serif', fontSize: 24 }}>
-              Its cool to be weird
-            </Typography>
-          </motion.div>
-        )}
-      </AnimatePresence>
-      
-    </Box>
-    
+            <Typography sx={{
+              color: '#EDE7F6',
+              fontFamily: 'Tiny5, sans-serif',
+                fontSize: mobile ? 16 : 18,
+                textAlign: 'center',
+                mb: 0.5,
+                textShadow: '0 2px 8px rgba(0,0,0,0.8)'
+              }}>
+                New Release ✨
+              </Typography>
+              <motion.div
+                animate={{
+                  y: [0, 8, 0],
+                }}
+                transition={{
+                  duration: 1.2,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+              >
+                <KeyboardArrowDownIcon sx={{
+                  color: '#EDE7F6',
+                  fontSize: mobile ? 36 : 42,
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6))'
+                }} />
+              </motion.div>
+            </motion.div>
+          )}
+      </Box>
+    </SnackbarProvider>
   )
 }
