@@ -134,7 +134,7 @@ export default function Gallery({ images }: { images: PropImage[] }) {
   }, [selectedItem])
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', position: 'absolute', bottom: 0, left: 0, width: '100vw', overflow: 'hidden', alignItems: 'center' }}>
+    <Box sx={{ display: 'flex', justifyContent: 'center', position: 'absolute', bottom: 0, left: 0, width: '100vw', alignItems: 'center' }}>
 
       <Fade in={shouldAnimate} timeout={1000} style={{ height: '100%' }}>
         <Box
@@ -153,9 +153,9 @@ export default function Gallery({ images }: { images: PropImage[] }) {
         >
           <Card
             sx={{
-              height: '100%',
+              height: 'calc(100% - 48px)',
               width: '100%',
-              maxHeight: mobile ? 460 : 500,
+              maxHeight: mobile ? 'calc(100dvh - 260px)' : 480,
               backgroundColor: 'rgba(12,12,12,0.8)',
               display: selectedItem !== undefined ? 'flex' : 'none',
               flexDirection: 'column',
@@ -176,7 +176,7 @@ export default function Gallery({ images }: { images: PropImage[] }) {
               <Typography sx={{ color: '#ffffff' }} variant="body2">{selectedItem?.artist}</Typography>
             </div>
             <div style={{ flex: 1 }} />
-            <Box sx={{ mt: 6, aspectRatio: '16/9', minHeight: '120px', maxHeight: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Box sx={{ mt: mobile ? 2 : 6, aspectRatio: '16/9', minHeight: mobile ? '80px' : '120px', maxHeight: mobile ? '100px' : '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {
                 selectedItem !== undefined && selectedItem.type === 'Pre-save' ? (
                   <Box sx={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
@@ -217,7 +217,7 @@ export default function Gallery({ images }: { images: PropImage[] }) {
             {selectedItem !== undefined && (
               selectedItem.type === 'Pre-save' ? (
                 <>
-                  <div style={{ textAlign: 'center', marginBottom: 16 }}>
+                  <div style={{ textAlign: 'center', marginBottom: mobile ? 8 : 16 }}>
                     <Typography sx={{ color: '#ffffff', fontSize: '0.875rem', fontWeight: 700 }}>Pre-save on all platforms</Typography>
                   </div>
                   <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
@@ -291,7 +291,7 @@ export default function Gallery({ images }: { images: PropImage[] }) {
           </Card>
         </Box>
       </Fade>
-      <Box sx={{ height: 'calc(100vh - 200px)', width: 'calc(100vw)', overflow: 'hidden' }}>
+      <Box sx={{ height: 'calc(100dvh - 200px)', width: 'calc(100vw)', overflow: 'hidden' }}>
         <Suspense fallback={
           <Box sx={{ width: '100%', height: '100%', zIndex: 10, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
             <CircularProgress />

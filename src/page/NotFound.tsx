@@ -7,7 +7,7 @@ export default function NotFound() {
   const navigate = useNavigate();
 
   return (
-    <Box sx={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden" }}>
+    <Box sx={{ width: "100vw", height: "100dvh", position: "relative", overflow: "hidden" }}>
       <StarBackground />
       <Box
         component={motion.div}

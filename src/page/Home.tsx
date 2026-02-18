@@ -54,6 +54,7 @@ export default function Home() {
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [loadPage, setLoadPage] = useState(sessionStorage.getItem('share:visitor') === 'true');
+  // @ts-ignore
   const [hideTheMessage, setHideTheMessage] = useState(false);
   const [hidePointer, setHidePointer] = useState(false);
 
@@ -88,10 +89,10 @@ export default function Home() {
         horizontal: 'right',
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', width: '100vw', height: '100vh', overflow: 'hidden', position: 'relative' }}>
-        <StarBackground />
+      <Box sx={{ display: 'flex', alignItems: 'center', flexDirection: 'column', width: '100vw', height: '100dvh', overflow: 'hidden', position: 'relative' }}>
+        {loadPage && <StarBackground />}
         <Fade in={loadPage} style={{ transitionDuration: '3s', zIndex: 10, position: 'relative' }}>
-          <Box sx={{ backgroundColor: 'transparent', minWidth: { xs: 240, sm: 350 }, maxWidth: { xs: 240, sm: 350 }, height: { xs: 150, sm: 220 }, mt: 2, transition: 'all smooth 2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box sx={{ backgroundColor: 'transparent', minWidth: 260, maxWidth: 260, height: 160, mt: 0, transition: 'all smooth 2s', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <img src={shareLogo} style={{ transition: 'all smooth 2.0s', width: '100%', height: '100%', objectFit: 'cover' }}/>
           </Box>
         </Fade>
@@ -221,7 +222,7 @@ export default function Home() {
             transition={{ delay: 1.5 }}
             style={{
               position: 'absolute',
-              top: mobile ? '42%' : '32%',
+              top: mobile ? '36%' : '32%',
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 6,
