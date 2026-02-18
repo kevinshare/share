@@ -1,1 +1,1 @@
-{"root":["./src/App.tsx","./src/ErrorBoundary.tsx","./src/main.tsx","./src/snackbar.ts","./src/vite-env.d.ts","./src/components/StarBackground.tsx","./src/gallery/Gallery.tsx","./src/page/Home.tsx","./src/page/NotFound.tsx"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/errorboundary.tsx","./src/main.tsx","./src/snackbar.ts","./src/vite-env.d.ts","./src/components/starbackground.tsx","./src/gallery/gallery.tsx","./src/page/home.tsx","./src/page/notfound.tsx"],"version":"5.9.3"}

@@ -159,6 +159,7 @@ export default function Gallery({ images }: { images: PropImage[] }) {
               backgroundColor: 'rgba(12,12,12,0.8)',
               display: selectedItem !== undefined ? 'flex' : 'none',
               flexDirection: 'column',
+              alignItems: 'center',
               backdropFilter: 'blur(20px)',
               borderRadius: '12px',
               p: 2,
@@ -255,12 +256,12 @@ export default function Gallery({ images }: { images: PropImage[] }) {
                   </Box>
                 </>
               ) : (
-                <CardContent sx={{ display: 'flex', alignItems: 'flex-end', p: 0, '&:last-child': { pb: 0 } }}>
-                  <div>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, p: 0, '&:last-child': { pb: 0 }, width: '100%' }}>
+                  <div style={{ textAlign: 'center' }}>
                     <Typography sx={{ color: '#ffffff' }} variant="caption">{'Play on:'}</Typography>
                     <Typography sx={{ color: '#ffffff', fontSize: '1.125rem', fontWeight: 700 }}>{selectedItem.type}</Typography>
                   </div>
-                  <Box sx={{ ml: 'auto', display: 'flex', gap: 1 }}>
+                  <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                     <Button
                       variant="contained"
                       size="small"
