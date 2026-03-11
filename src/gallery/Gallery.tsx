@@ -1,23 +1,37 @@
 import * as THREE from 'three'
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import soundcloudSvg from '../assets/soundcloud.svg'
 import spotifySvg from '../assets/spotify.svg'
 import youtubeSvg from '../assets/youtube.svg'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { useCursor, MeshReflectorMaterial, Image, RoundedBox, Environment, AdaptiveDpr, PerformanceMonitor } from '@react-three/drei'
-import getUuid from 'uuid-by-string'
+import { useCursor, MeshReflectorMaterial, Image, RoundedBox, Environment, AdaptiveDpr, PerformanceMonitor, useTexture } from '@react-three/drei'
 import { Location, NavigateFunction, useLocation, useNavigate } from 'react-router-dom'
-import { Box, Button, Card, CardContent, CircularProgress, Fade, Typography, useMediaQuery, useTheme } from '@mui/material'
+import { Box, Button, Card, CardContent, CircularProgress, Fade, Typography, useMediaQuery } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import { keyframes } from '@emotion/react'
 import { Home } from '@mui/icons-material'
+import { PlatformType, Song, getSongPath, isMultiPlatform } from '../data/songs'
 
 const GOLDENRATIO = 1.61803398875
 
 const PLANE_ARGS: [number, number] = [60, 60]
 const FLOOR_ROTATION: [number, number, number] = [-Math.PI / 2, 0, 0]
 const FLOOR_POSITION: [number, number, number] = [0, 0, 0]
+const FRAME_IMAGE_PADDING = 0.92
+const FRAME_DEPTH_OFFSET = 0.031
+const BACKGROUND_KEY_THRESHOLD = 16
+const BACKGROUND_KEY_SOFTNESS = 40
 
-// Smooth gold glow animation
+const getSelectedSlug = (pathname: string) => {
+  const segments = pathname.replace(/\/+$/, '').split('/').filter(Boolean)
+
+  if (segments[0] !== 'song') {
+    return undefined
+  }
+
+  return segments[1]
+}
+
 const goldGlow = keyframes`
   0% {
     box-shadow:
@@ -45,45 +59,81 @@ const goldGlow = keyframes`
   }
 `
 
-export type PlatformType = 'Soundcloud' | 'Spotify' | 'Youtube' | 'Pre-save'
-
-export interface PropImage {
-  image: string
-  title: string
-  artist: string
-  type: PlatformType
-  url: string
-}
-
 interface FramesProps {
-  images: PropImage[]
+  images: Song[]
   location: Location
   navigate: NavigateFunction
   mobile: boolean
   tablet: boolean
-  handleSetSelectedItem: (image: PropImage | undefined) => void
+  handleSetSelectedItem: (image: Song | undefined) => void
 }
 
 interface FrameProps {
-  url: string
-  name: string
-  mobile: boolean
-  imageProps: PropImage
+  song: Song
+  selectedSlug?: string
   position?: [number, number, number]
   'rotation-y'?: number
 }
 
-export default function Gallery({ images }: { images: PropImage[] }) {
+type TextureImage = CanvasImageSource & { width?: number; height?: number }
+
+function createTransparentTexture(texture: THREE.Texture) {
+  const image = texture.image as TextureImage | undefined
+  const imageWidth = image?.width ?? 0
+  const imageHeight = image?.height ?? 0
+
+  if (typeof document === 'undefined' || !image || !imageWidth || !imageHeight) {
+    return texture
+  }
+
+  const canvas = document.createElement('canvas')
+  canvas.width = imageWidth
+  canvas.height = imageHeight
+
+  const context = canvas.getContext('2d', { willReadFrequently: true })
+  if (!context) {
+    return texture
+  }
+
+  context.drawImage(image, 0, 0, imageWidth, imageHeight)
+  const imageData = context.getImageData(0, 0, imageWidth, imageHeight)
+
+  for (let index = 0; index < imageData.data.length; index += 4) {
+    const red = imageData.data[index]
+    const green = imageData.data[index + 1]
+    const blue = imageData.data[index + 2]
+    const brightness = Math.max(red, green, blue)
+    const alpha = THREE.MathUtils.clamp((brightness - BACKGROUND_KEY_THRESHOLD) / BACKGROUND_KEY_SOFTNESS, 0, 1)
+
+    imageData.data[index + 3] = Math.round(imageData.data[index + 3] * alpha)
+  }
+
+  context.putImageData(imageData, 0, 0)
+
+  const transparentTexture = new THREE.CanvasTexture(canvas)
+  transparentTexture.colorSpace = texture.colorSpace
+  transparentTexture.wrapS = texture.wrapS
+  transparentTexture.wrapT = texture.wrapT
+  transparentTexture.minFilter = texture.minFilter
+  transparentTexture.magFilter = texture.magFilter
+  transparentTexture.generateMipmaps = texture.generateMipmaps
+  transparentTexture.anisotropy = texture.anisotropy
+  transparentTexture.needsUpdate = true
+
+  return transparentTexture
+}
+
+export default function Gallery({ images }: { images: Song[] }) {
   const theme = useTheme()
   const location = useLocation()
   const navigate = useNavigate()
-  const [selectedItem, setSelectedItem] = useState<PropImage | undefined>(undefined)
+  const [selectedItem, setSelectedItem] = useState<Song | undefined>(undefined)
   const [shouldAnimate, setShouldAnimate] = useState(false)
   const mobile = useMediaQuery(theme.breakpoints.down('sm'))
   const tablet = useMediaQuery(theme.breakpoints.down('lg'))
   const reflectorResolution = mobile ? 512 : 1024
 
-  const handleSetSelectedItem = useCallback((image: PropImage | undefined) => {
+  const handleSetSelectedItem = useCallback((image: Song | undefined) => {
     setSelectedItem(image)
   }, [])
 
@@ -97,7 +147,7 @@ export default function Gallery({ images }: { images: PropImage[] }) {
     if (itemType === 'Youtube') {
       return youtubeSvg
     }
-    if (itemType === 'Pre-save') {
+    if (isMultiPlatform(itemType)) {
       return [spotifySvg, soundcloudSvg, youtubeSvg]
     }
   }
@@ -115,6 +165,9 @@ export default function Gallery({ images }: { images: PropImage[] }) {
     }
     if (itemType === 'Youtube') {
       return '#f00'
+    }
+    if (isMultiPlatform(itemType)) {
+      return '#eaaf00'
     }
     return '#eaaf00'
   }
@@ -163,23 +216,23 @@ export default function Gallery({ images }: { images: PropImage[] }) {
               backdropFilter: 'blur(20px)',
               borderRadius: '12px',
               p: 2,
-              ...(selectedItem?.type === 'Pre-save' && {
+              ...(selectedItem && isMultiPlatform(selectedItem.type) && {
                 border: '2px solid rgba(255, 215, 0, 0.8)',
                 animation: `${goldGlow} 2.5s ease-in-out infinite`,
               }),
-              ...(selectedItem?.type !== 'Pre-save' && {
+              ...(selectedItem && !isMultiPlatform(selectedItem.type) && {
                 border: 'none',
               }),
             }}
           >
             <div>
-              <Typography sx={{ color: '#ffffff', fontSize: '24px', whiteSpace: 'pre-line' }} variant="h6">{selectedItem?.title}</Typography>
+              <Typography sx={{ color: '#ffffff', fontSize: '24px', fontWeight: 600, whiteSpace: 'pre-line' }} variant="h6">{selectedItem?.title}</Typography>
               <Typography sx={{ color: '#ffffff' }} variant="body2">{selectedItem?.artist}</Typography>
             </div>
             <div style={{ flex: 1 }} />
             <Box sx={{ mt: mobile ? 2 : 6, aspectRatio: '16/9', minHeight: mobile ? '80px' : '120px', maxHeight: mobile ? '100px' : '140px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {
-                selectedItem !== undefined && selectedItem.type === 'Pre-save' ? (
+                selectedItem !== undefined && isMultiPlatform(selectedItem.type) ? (
                   <Box sx={{ position: 'relative', width: '100%', height: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                     {getAllPlatformSvgs().map((svg, index) => (
                       <img
@@ -216,10 +269,12 @@ export default function Gallery({ images }: { images: PropImage[] }) {
             </Box>
             <div style={{ flex: 1 }} />
             {selectedItem !== undefined && (
-              selectedItem.type === 'Pre-save' ? (
+              isMultiPlatform(selectedItem.type) ? (
                 <>
                   <div style={{ textAlign: 'center', marginBottom: mobile ? 8 : 16 }}>
-                    <Typography sx={{ color: '#ffffff', fontSize: '0.875rem', fontWeight: 700 }}>Pre-save on all platforms</Typography>
+                    <Typography sx={{ color: '#ffffff', fontSize: '0.875rem', fontWeight: 700 }}>
+                      {selectedItem.type === 'Pre-save' ? 'Pre-save on all platforms' : 'Listen on all platforms'}
+                    </Typography>
                   </div>
                   <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
                     <Button
@@ -246,12 +301,12 @@ export default function Gallery({ images }: { images: PropImage[] }) {
                         background: getBackgroundColor(selectedItem.type),
                         '&:hover': { background: getBackgroundColor(selectedItem.type) },
                         minWidth: 'fit-content',
-                        color: selectedItem.type === 'Pre-save' ? '#000000' : '#ffffff',
+                        color: isMultiPlatform(selectedItem.type) ? '#000000' : '#ffffff',
                         boxShadow: 'none',
                         textTransform: 'none',
                       }}
                     >
-                      Pre-save
+                      {selectedItem.type === 'Pre-save' ? 'Pre-save' : 'Play'}
                     </Button>
                   </Box>
                 </>
@@ -332,14 +387,16 @@ export default function Gallery({ images }: { images: PropImage[] }) {
 
 function Frames({ images, location, tablet, mobile, handleSetSelectedItem, navigate }: FramesProps) {
   const ref = useRef<THREE.Group>(null)
-  const [name, setName] = useState('')
+  const [name, setName] = useState<string | undefined>(undefined)
   const clicked = useRef<THREE.Object3D | null>(null)
   const q = useMemo(() => new THREE.Quaternion(), [])
   const p = useMemo(() => new THREE.Vector3(), [])
 
   useEffect(() => {
+    const selectedSlug = getSelectedSlug(location.pathname)
+
     if (ref.current) {
-      clicked.current = ref.current.getObjectByName(location.pathname.split('/')[2]) ?? null
+      clicked.current = selectedSlug ? ref.current.getObjectByName(selectedSlug) ?? null : null
     }
     if (clicked.current?.parent) {
       clicked.current.parent.localToWorld(p.set(0, GOLDENRATIO / 2, 1.25))
@@ -358,12 +415,12 @@ function Frames({ images, location, tablet, mobile, handleSetSelectedItem, navig
   })
 
   useEffect(() => {
-    setName(location.pathname.split('/')[2])
-  }, [location])
+    setName(getSelectedSlug(location.pathname))
+  }, [location.pathname])
 
   useEffect(() => {
-    const selectedItem = images.filter(image => name === getUuid(image.image))
-    handleSetSelectedItem(selectedItem[0])
+    const selectedItem = images.find((image) => name === image.slug)
+    handleSetSelectedItem(selectedItem)
   }, [name, images, handleSetSelectedItem])
 
 
@@ -379,33 +436,32 @@ function Frames({ images, location, tablet, mobile, handleSetSelectedItem, navig
       onClick={(e) => {
         e.stopPropagation()
         const clickedName = e.object.name
-        const currentName = location.pathname.split('/')[2]
+        const clickedSong = images.find((image) => image.slug === clickedName)
+        const currentName = getSelectedSlug(location.pathname)
         if (currentName === clickedName) {
-          // Deselect: already viewing this item
           navigate('/')
-          setName('')
-        } else {
-          // Select new item
-          navigate('/song/' + clickedName)
+          setName(undefined)
+        } else if (clickedSong) {
+          navigate(getSongPath(clickedSong))
           setName(clickedName)
         }
       }}
       onPointerMissed={() => {}}>
-      <Frame mobile={mobile} url={images[0].image} imageProps={images[0]} position={[0, 0, 1.25]} name={name} />
-      <Frame mobile={mobile} position={[-1.75, 0, 1]} rotation-y={Math.PI / 2.8} url={images[1].image} imageProps={images[1]} name={name} />
-      <Frame mobile={mobile} position={[-2.2, 0, 2.5]} rotation-y={Math.PI / 2.8} url={images[2].image} imageProps={images[2]} name={name} />
-      <Frame mobile={mobile} position={[1.75, 0, 1]} rotation-y={-Math.PI / 2.8} url={images[3].image} imageProps={images[3]} name={name} />
-      <Frame mobile={mobile} position={[2.2, 0, 2.5]} rotation-y={-Math.PI / 2.8} url={images[4].image} imageProps={images[4]} name={name} />
+      <Frame song={images[0]} position={[0, 0, 1.25]} selectedSlug={name} />
+      <Frame song={images[1]} position={[-1.75, 0, 1]} rotation-y={Math.PI / 2.8} selectedSlug={name} />
+      <Frame song={images[2]} position={[-2.2, 0, 2.5]} rotation-y={Math.PI / 2.8} selectedSlug={name} />
+      <Frame song={images[3]} position={[1.75, 0, 1]} rotation-y={-Math.PI / 2.8} selectedSlug={name} />
+      <Frame song={images[4]} position={[2.2, 0, 2.5]} rotation-y={-Math.PI / 2.8} selectedSlug={name} />
     </group>
   )
 }
 
-function Frame({ url, name, ...props }: FrameProps) {
+function Frame({ song, selectedSlug, ...props }: FrameProps) {
   const [hovered, hover] = useState(false)
   const [rnd] = useState(() => Math.random())
   const image = useRef<THREE.Mesh>(null)
   const ref = useRef<THREE.Group>(null)
-  const isSelected = name === getUuid(url)
+  const isSelected = selectedSlug === song.slug
   useCursor(hovered)
 
   useFrame((state, delta) => {
@@ -438,7 +494,7 @@ function Frame({ url, name, ...props }: FrameProps) {
   return (
     <group ref={ref} {...props}>
       <RoundedBox
-        name={getUuid(url)}
+        name={song.slug}
         onPointerOver={() => hover(true)}
         onPointerOut={() => hover(false)}
         radius={0.05}
@@ -447,15 +503,52 @@ function Frame({ url, name, ...props }: FrameProps) {
         position={[0, GOLDENRATIO / 2, 0]}>
         <meshStandardMaterial color="#151515" metalness={0.8} roughness={0.2} envMapIntensity={20} transparent opacity={0} />
 
-        <Image
-          raycast={() => null}
-          ref={image}
-          scale={0.99}
-          position={[0, 0, 1]}
-          url={url}
-        />
       </RoundedBox>
+      <FrameImage ref={image} url={song.image} />
 
     </group>
   )
 }
+
+const FrameImage = forwardRef<THREE.Mesh, { url: string }>(function FrameImage({ url }, ref) {
+  const texture = useTexture(url)
+  const transparentTexture = useMemo(() => createTransparentTexture(texture), [texture])
+
+  useEffect(() => {
+    if (transparentTexture === texture) {
+      return
+    }
+
+    return () => {
+      transparentTexture.dispose()
+    }
+  }, [texture, transparentTexture])
+
+  const scale = useMemo<[number, number]>(() => {
+    const image = texture.image as { width?: number; height?: number } | undefined
+    const imageWidth = image?.width ?? 1
+    const imageHeight = image?.height ?? 1
+    const imageAspectRatio = imageWidth / imageHeight || 1
+    const maxWidth = FRAME_IMAGE_PADDING
+    const maxHeight = GOLDENRATIO * FRAME_IMAGE_PADDING
+    const frameAspectRatio = maxWidth / maxHeight
+
+    if (imageAspectRatio >= frameAspectRatio) {
+      return [maxWidth, maxWidth / imageAspectRatio]
+    }
+
+    return [maxHeight * imageAspectRatio, maxHeight]
+  }, [texture])
+
+  return (
+    <Image
+      raycast={() => null}
+      ref={ref}
+      texture={transparentTexture}
+      scale={scale}
+      radius={0.04}
+      transparent
+      position={[0, GOLDENRATIO / 2, FRAME_DEPTH_OFFSET]}
+    />
+  )
+})

@@ -4,53 +4,17 @@ import Gallery from "../gallery/Gallery";
 import shareLogo from '../assets/share-logo.png';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { snackSuccess } from "../snackbar";
 import { SnackbarProvider } from "notistack";
-import { PropImage } from "../gallery/Gallery";
 import StarBackground from "../components/StarBackground";
-
-const images: PropImage[] = [
-  {
-    image: '/BetterHereIconCover.png',
-    title: 'Better Here',
-    artist: 'Share, Electricole',
-    type: 'Pre-save',
-    url: 'https://ffm.to/betterhere'
-  },
-  {
-    image: '/FloMilliIconCover.png',
-    title: 'Never Lose Me \n (Share Remix)',
-    artist: 'Flo Milli',
-    type: 'Soundcloud',
-    url: 'https://soundcloud.com/kevinshare/flo-milli-never-lose-me-share-remix?si=ceffc9c05bd44e6f8532ac00f0b3b88f&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
-  },
-  {
-    image: '/ThousanMilesIconCover.png',
-    title: 'A Thousand Miles \n (Share Remix)',
-    artist: 'Vanessa Carlton',
-    type: 'Soundcloud',
-    url: 'https://soundcloud.com/kevinshare/thousand-miles-share-remix-2?si=d1c49080a79a4c928b7c297464192041&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
-  },
-  {
-    image: '/FashionKillaIconCover.png',
-    title: "Fashion Killa \n (Share Remix)",
-    artist: 'A$AP Rocky',
-    type: 'Soundcloud',
-    url: 'https://soundcloud.com/kevinshare/aap-rocky-fashion-killa-share-remix?si=a99963ffd7954150acb82f3b25c731b9&utm_source=clipboard&utm_medium=text&utm_campaign=social_sharing'
-  },
-  {
-    image: '/LonelyIconCover.png',
-    title: 'Lonely (Share Remix)',
-    artist: 'Justin Bieber',
-    type: 'Youtube',
-    url: 'https://www.youtube.com/watch?v=6uDHEs2jUAU'
-  },
-];
+import { getRootPageMetadata, getSongPageMetadata, songs } from "../data/songs";
+import { syncPageMetadata } from "../lib/syncPageMetadata";
 
 export default function Home() {
   const location = useLocation();
+  const { slug } = useParams();
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [loadPage, setLoadPage] = useState(sessionStorage.getItem('share:visitor') === 'true');
@@ -68,6 +32,13 @@ export default function Home() {
       setHidePointer(true);
     }
   }, [location.pathname]);
+
+  useEffect(() => {
+    const selectedSong = slug ? songs.find((song) => song.slug === slug) : undefined;
+    const metadata = selectedSong ? getSongPageMetadata(selectedSong) : getRootPageMetadata();
+
+    syncPageMetadata(metadata);
+  }, [slug]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -184,7 +155,7 @@ export default function Home() {
 
           <Fade in={loadPage} timeout={5000}>
             <div onClick={() => setHidePointer(true)}>
-              <Gallery images={images}/>
+              <Gallery images={songs}/>
             </div>
           </Fade>
 

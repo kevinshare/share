@@ -4,19 +4,24 @@ import { ErrorBoundary } from './ErrorBoundary'
 import Home from './page/Home'
 import NotFound from './page/NotFound'
 import { Suspense } from 'react'
+import { ThemeProvider, createTheme } from '@mui/material'
+
+const theme = createTheme()
 
 function App() {
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" errorElement={<ErrorBoundary />}>
-          <Route index element={<Suspense fallback={null}><Home /></Suspense>} />
-          <Route path="/song/*" element={<Suspense fallback={null}><Home /></Suspense>} />
-          <Route path="*" element={<Suspense fallback={null}><NotFound /></Suspense>} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider theme={theme}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" errorElement={<ErrorBoundary />}>
+            <Route index element={<Suspense fallback={null}><Home /></Suspense>} />
+            <Route path="/song/:slug" element={<Suspense fallback={null}><Home /></Suspense>} />
+            <Route path="*" element={<Suspense fallback={null}><NotFound /></Suspense>} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   )
 }
 
